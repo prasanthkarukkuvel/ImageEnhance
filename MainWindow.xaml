@@ -25,7 +25,7 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="24 0 0 0">
                     <TextBlock Padding="0 0 0 16" Foreground="Wheat">Adjust Contrast</TextBlock>
-                    <Slider  Name="Adjuster" Minimum="0" Maximum="255" ValueChanged="Adjuster_ValueChanged" />
+                    <Slider  Name="Adjuster" Minimum="0" Maximum="255" LostMouseCapture="Adjuster_LostMouseCapture" />
                 </StackPanel>
             </Grid>           
         </StackPanel>
