@@ -59,7 +59,7 @@ namespace ImageEnhance
         }
         private void ProcessPixles(double Value)
         {
-            var Source = new WriteableBitmap(Image);
+            var Source = new WriteableBitmap(Image.PixelWidth, Image.PixelHeight, Image.DpiX, Image.DpiY, Image.Format, Image.Palette);
             var Width = Image.PixelWidth / 4;
             var Height = Image.PixelHeight / 2;
             var Stride = Width * ((Image.Format.BitsPerPixel + 7) / 8);
@@ -77,7 +77,7 @@ namespace ImageEnhance
                     Image.CopyPixels(Rect, Pixels, Stride, 0);
 
                     new Thread(() => InvokeChangeContrast(Pixels, Value, Rect, Stride, Source, HandleChangeContrast))
-                       .Start();
+                       .Start();                   
                 }
             }
         }
@@ -91,14 +91,21 @@ namespace ImageEnhance
 
                  if (Counter == 0)
                  {
+                     Previewer.Source = null;
                      Previewer.Source = Source;
+                     Source = null;
                      Adjuster.IsEnabled = true;
+
+                     GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+                     GC.Collect();
+                     GC.WaitForPendingFinalizers();
                  }
              }));
         }
         private void SetPixles(byte[] Pixels, Int32Rect Rect, int Stride, WriteableBitmap Source)
         {
             Source.WritePixels(Rect, Pixels, Stride, 0);
+            Array.Resize(ref Pixels, 0);
         }
 
         private static void InvokeChangeContrast(byte[] Pixels, double AdjustValue, Int32Rect Rect, int Stride, WriteableBitmap Source, Action<byte[], Int32Rect, int, WriteableBitmap> Callback)
