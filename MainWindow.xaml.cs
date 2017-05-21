@@ -28,18 +28,16 @@ namespace ImageEnhance
         {
             InitializeComponent();
         }
-        public string FileName { get; set; }
         public BitmapImage Image { get; set; }
-        public Int32Rect ImageRect => Image != null ? new Int32Rect(0, 0, Image.PixelWidth, Image.PixelHeight) : Int32Rect.Empty;
         public int Counter { get; set; }
+
         private void Open_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog Dialog = new OpenFileDialog();
             Dialog.Filter = "JPEG|*.jpg;";
             if ((bool)Dialog.ShowDialog(this))
             {
-                FileName = Dialog.FileName;
-                using (var Stream = File.Open(FileName, FileMode.Open, FileAccess.Read))
+                using (var Stream = File.Open(Dialog.FileName, FileMode.Open, FileAccess.Read))
                 {
                     Image = new BitmapImage();
                     Image.BeginInit();
@@ -53,9 +51,9 @@ namespace ImageEnhance
         private void Adjuster_LostMouseCapture(object sender, MouseEventArgs e)
         {
             if (Image != null)
-            {
-                Adjuster.IsEnabled = false;
+            {                
                 var Value = Adjuster.Value;
+                Adjuster.IsEnabled = false;
                 ProcessPixles(Value);
             }
         }
@@ -80,12 +78,8 @@ namespace ImageEnhance
 
                     new Thread(() => InvokeChangeContrast(Pixels, Value, Rect, Stride, Source, HandleChangeContrast))
                        .Start();
-                }               
+                }
             }
-        }
-        private static void InvokeChangeContrast(byte[] Pixels, double AdjustValue, Int32Rect Rect, int Stride, WriteableBitmap Source, Action<byte[], Int32Rect, int, WriteableBitmap> Callback)
-        {
-            Callback(ChangeContrast(Pixels, AdjustValue), Rect, Stride, Source);
         }
         private void HandleChangeContrast(byte[] Pixels, Int32Rect Rect, int Stride, WriteableBitmap Source)
         {
@@ -106,15 +100,20 @@ namespace ImageEnhance
         {
             Source.WritePixels(Rect, Pixels, Stride, 0);
         }
+
+        private static void InvokeChangeContrast(byte[] Pixels, double AdjustValue, Int32Rect Rect, int Stride, WriteableBitmap Source, Action<byte[], Int32Rect, int, WriteableBitmap> Callback)
+        {
+            Callback(ChangeContrast(Pixels, AdjustValue), Rect, Stride, Source);
+        }
         private static byte[] ChangeContrast(byte[] Pixels, double AdjustValue)
         {
-            double ContrastLevel = Math.Pow((100.0 + AdjustValue) / 100.0, 2);
+            var ContrastLevel = Math.Pow((100.0 + AdjustValue) / 100.0, 2);
 
-            for (int k = 0; k + 4 < Pixels.Length; k += 4)
+            for (int i = 0; i + 4 < Pixels.Length; i += 4)
             {
-                Pixels[k] = CorrectContrast(GetContrast(Pixels[k], ContrastLevel));
-                Pixels[k + 1] = CorrectContrast(GetContrast(Pixels[k + 1], ContrastLevel));
-                Pixels[k + 2] = CorrectContrast(GetContrast(Pixels[k + 2], ContrastLevel));
+                Pixels[i] = CorrectContrast(GetContrast(Pixels[i], ContrastLevel));
+                Pixels[i + 1] = CorrectContrast(GetContrast(Pixels[i + 1], ContrastLevel));
+                Pixels[i + 2] = CorrectContrast(GetContrast(Pixels[i + 2], ContrastLevel));
             }
 
             return Pixels;
