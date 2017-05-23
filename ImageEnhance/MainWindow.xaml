@@ -17,17 +17,27 @@
         <StackPanel Grid.Row="1" Margin="24 10">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="72"/>
-                    <ColumnDefinition  Width="*"/>
+                    <ColumnDefinition Width="96"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <Button Name="Open" Padding="16 8" Click="Open_Click">Open</Button>
+                    <Button Name="Open" Padding="16 8" Click="Open_Click" FontSize="16">Open</Button>
+                    <TextBlock Name="Time" Padding="0 8" FontWeight="SemiBold" Foreground="#FFFB3213" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18">00:00 TT</TextBlock>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="24 0 0 0">
-                    <TextBlock Padding="0 0 0 16" Foreground="Wheat">Adjust Contrast</TextBlock>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Padding="0 0 0 16" Foreground="Wheat">Adjust Contrast</TextBlock>
+                        <TextBlock Grid.Column="1" Padding="0 0 8 0" HorizontalAlignment="Right" Foreground="White" FontSize="18">Time Taken: 
+                             <TextBlock FontWeight="SemiBold" Name="StopCount">0</TextBlock>
+                        </TextBlock>
+                    </Grid>
                     <Slider  Name="Adjuster" Minimum="0" Maximum="255" LostMouseCapture="Adjuster_LostMouseCapture" />
                 </StackPanel>
-            </Grid>           
+            </Grid>
         </StackPanel>
     </Grid>
 </Window>

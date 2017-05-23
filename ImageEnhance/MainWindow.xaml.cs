@@ -1,20 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Microsoft.Win32;
+using System;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using Microsoft.Win32;
-using System.Threading;
-using System.IO;
-using System.Runtime;
 using System.Diagnostics;
 
 namespace ImageEnhance
@@ -27,9 +18,25 @@ namespace ImageEnhance
         public MainWindow()
         {
             InitializeComponent();
+            OnInit();
         }
         public BitmapImage Image { get; set; }
         public int Counter { get; set; }
+        public Stopwatch Stopwatch { get; set; } = new Stopwatch();
+        public System.Timers.Timer Timer { get; set; } = new System.Timers.Timer(1000);
+
+        private void OnInit()
+        {
+            Time.Text = DateTime.Now.ToLongTimeString();
+            Timer.Start();
+            Timer.Elapsed += ((a,b) =>
+            {
+                Dispatcher.BeginInvoke((Action)(() =>
+                {
+                    Time.Text = DateTime.Now.ToLongTimeString();
+                }));
+            });
+        }
 
         private void Open_Click(object sender, RoutedEventArgs e)
         {
@@ -51,24 +58,27 @@ namespace ImageEnhance
         private void Adjuster_LostMouseCapture(object sender, MouseEventArgs e)
         {
             if (Image != null)
-            {                
+            {
                 var Value = Adjuster.Value;
                 Adjuster.IsEnabled = false;
+                Stopwatch.Restart();
                 ProcessPixles(Value);
             }
         }
         private void ProcessPixles(double Value)
         {
+            var Column = 4;
+            var Row = Column / 2;
             var Source = new WriteableBitmap(Image.PixelWidth, Image.PixelHeight, Image.DpiX, Image.DpiY, Image.Format, Image.Palette);
-            var Width = Image.PixelWidth / 4;
-            var Height = Image.PixelHeight / 2;
+            var Width = Image.PixelWidth / Column;
+            var Height = Image.PixelHeight / Row;
             var Stride = Width * ((Image.Format.BitsPerPixel + 7) / 8);
             var Size = Height * Stride;
-            Counter = 4 * 2;
+            Counter = Column * Row;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < Column; i++)
             {
-                for (int j = 0; j < 2; j++)
+                for (int j = 0; j < Row; j++)
                 {
                     byte[] Pixels = new byte[Size];
 
@@ -77,7 +87,11 @@ namespace ImageEnhance
                     Image.CopyPixels(Rect, Pixels, Stride, 0);
 
                     new Thread(() => InvokeChangeContrast(Pixels, Value, Rect, Stride, Source, HandleChangeContrast))
-                       .Start();                   
+                       .Start();
+
+                    // InvokeChangeContrast(Pixels, Value, Rect, Stride, Source, HandleChangeContrast);
+
+                    // Task.Factory.StartNew(() => InvokeChangeContrast(Pixels, Value, Rect, Stride, Source, HandleChangeContrast));
                 }
             }
         }
@@ -94,12 +108,14 @@ namespace ImageEnhance
                      Previewer.Source = null;
                      Previewer.Source = Source;
                      Source = null;
+                     Stopwatch.Stop();
+                     StopCount.Text = Stopwatch.Elapsed.TotalMilliseconds + "";
                      Adjuster.IsEnabled = true;
 
-                     GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-                     GC.Collect();
-                     GC.WaitForPendingFinalizers();
-                 }
+                 //GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+                 //GC.Collect();
+                 //GC.WaitForPendingFinalizers();
+             }
              }));
         }
         private void SetPixles(byte[] Pixels, Int32Rect Rect, int Stride, WriteableBitmap Source)
@@ -112,6 +128,7 @@ namespace ImageEnhance
         {
             Callback(ChangeContrast(Pixels, AdjustValue), Rect, Stride, Source);
         }
+
         private static byte[] ChangeContrast(byte[] Pixels, double AdjustValue)
         {
             var ContrastLevel = Math.Pow((100.0 + AdjustValue) / 100.0, 2);
